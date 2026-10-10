@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough · Panel</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  header { background: #1565C0; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 20px; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+  .card h3 { margin: 0 0 4px; }
+  .muted { color: #777; font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
+  .b-ok { background: #e6f4ea; color: #1b7f3b; }
+  .b-warn { background: #fff3e0; color: #b26a00; }
+  .b-urg { background: #fdecea; color: #b3261e; }
+  .finding { border-left: 4px solid #ff9800; }
+  .finding.urgent { border-left-color: #d32f2f; background: #fff8f8; }
+  .photos { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .photos img { width: 160px; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+  .photos .cap { font-size: 11px; color: #777; text-align: center; }
+  .back { background: none; border: none; color: #1565C0; font-size: 15px; cursor: pointer; padding: 0 0 12px; }
+  pre.report { white-space: pre-wrap; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; }
+  .btn { background: #1565C0; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn.green { background: #1b7f3b; }
+  input[type=email], input[type=password] { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
+  #login .card { max-width: 380px; margin: 60px auto; }
+  .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏢 Walkthrough</h1>
+  <button id="btnLogout" hidden>Cerrar sesión</button>
+</header>
+
+<div class="wrap">
+  <!-- LOGIN -->
+  <div id="login">
+    <div class="card">
+      <h3>Entrar</h3>
+      <p class="muted">Usa el correo y contraseña que te asignaron.</p>
+      <input type="email" id="email" placeholder="Correo" autocomplete="username">
+      <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+      <button class="btn" id="btnLogin">Entrar</button>
+      <div class="err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" hidden>
+    <div id="viewBuildings"></div>
+    <div id="viewMonths" hidden></div>
+    <div id="viewDetail" hidden></div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIGURACIÓN: pega aquí tu firebaseConfig ============
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+// ====================================================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const AREAS = [
+  {icon:'🚶', name:'Pasillos y escaleras', n:4},
+  {icon:'🚪', name:'Entradas y lobby', n:5},
+  {icon:'💡', name:'Luces', n:4},
+  {icon:'🧱', name:'Paredes, techos y concreto', n:4},
+  {icon:'🧯', name:'Equipos de seguridad', n:4},
+  {icon:'🅿️', name:'Estacionamientos', n:4},
+  {icon:'🗑️', name:'Cuartos de basura y servicio', n:3},
+  {icon:'🏊', name:'Piscina, patios y áreas comunes', n:3},
+];
+function nombreMes(ym){ const p = ym.split('-'); return MESES[parseInt(p[1])-1] + ' ' + p[0]; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fl(f){ return f.floor ? 'Piso ' + esc(f.floor) + ' · ' : ''; }
+
+const $ = id => document.getElementById(id);
+function show(id){
+  ['viewBuildings','viewMonths','viewDetail'].forEach(v => $(v).hidden = (v !== id));
+}
+
+// ---------- Auth ----------
+$('btnLogin').onclick = async () => {
+  $('loginErr').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+  } catch(e){ $('loginErr').textContent = 'No se pudo entrar: ' + e.message; }
+};
+$('btnLogout').onclick = () => auth.signOut();
+auth.onAuthStateChanged(user => {
+  $('login').hidden = !!user;
+  $('app').hidden = !user;
+  $('btnLogout').hidden = !user;
+  if (user) loadBuildings();
+});
+
+// ---------- Edificios ----------
+let buildings = {};
+async function loadBuildings(){
+  show('viewBuildings');
+  const snap = await db.collection('buildings').get();
+  buildings = {};
+  let html = '<h2>Edificios</h2>';
+  if (snap.empty) html += '<div class="card"><p class="muted">Todavía no hay edificios sincronizados desde el teléfono.</p></div>';
+  snap.forEach(d => {
+    const b = d.data(); buildings[d.id] = b;
+    html += `<div class="card clickable" onclick="loadMonths('${d.id}')">
+      <h3>🏢 ${esc(b.name)}</h3><p class="muted">Ver recorridos →</p></div>`;
+  });
+  $('viewBuildings').innerHTML = html;
+}
+
+// ---------- Meses ----------
+async function loadMonths(buildingId){
+  show('viewMonths');
+  $('viewMonths').innerHTML = '<p class="muted">Cargando…</p>';
+  const snap = await db.collection('walkthroughs')
+    .where('buildingId','==',buildingId).get();
+  const list = [];
+  snap.forEach(d => list.push({id:d.id, ...d.data()}));
+  list.sort((a,b) => b.yearMonth.localeCompare(a.yearMonth));
+  const b = buildings[buildingId] || {name:''};
+  let html = `<button class="back" onclick="loadBuildings()">← Edificios</button>
+    <h2>${esc(b.name)}</h2>`;
+  if (!list.length) html += '<div class="card"><p class="muted">Sin recorridos todavía.</p></div>';
+  list.forEach(w => {
+    const urg = (w.findings||[]).filter(f=>f.urgent).length;
+    html += `<div class="card clickable" onclick="loadDetail('${w.id}')">
+      <h3>📋 ${nombreMes(w.yearMonth)}</h3>
+      <p class="muted">${(w.findings||[]).length} hallazgo(s)</p>
+      ${urg?`<span class="badge b-urg">🚨 ${urg} urgente(s)</span>`:''}</div>`;
+  });
+  window._months = {}; list.forEach(w => window._months[w.id] = w);
+  $('viewMonths').innerHTML = html;
+}
+
+// ---------- Detalle ----------
+function areaStatus(w, i){
+  const findings = (w.findings||[]).filter(f=>f.areaIndex===i);
+  if (findings.length) return {t: findings.length + ' hallazgo(s)', c:'b-warn'};
+  let ok = 0;
+  for (let j=0;j<AREAS[i].n;j++) if (w.itemStatus && w.itemStatus[i+'-'+j]===1) ok++;
+  if (ok === AREAS[i].n) return {t:'Sin problemas', c:'b-ok'};
+  return {t:'Pendiente', c:''};
+}
+
+function findingCard(f){
+  const area = AREAS[f.areaIndex] ? AREAS[f.areaIndex].icon+' '+AREAS[f.areaIndex].name : '';
+  const g = f.photoGeneralUrl || f.photoGeneral;
+  const c = f.photoCloseupUrl || f.photoCloseup;
+  let ph = '';
+  if (g || c){
+    ph = '<div class="photos">';
+    if (g) ph += `<div><a href="${g}" target="_blank"><img src="${g}"></a><div class="cap">General</div></div>`;
+    if (c) ph += `<div><a href="${c}" target="_blank"><img src="${c}"></a><div class="cap">De cerca</div></div>`;
+    ph += '</div>';
+  }
+  return `<div class="card finding ${f.urgent?'urgent':''}">
+    ${f.urgent?'<span class="badge b-urg">🚨 URGENTE</span> ':''}
+    <h3>${fl(f)}${esc(f.location || f.itemLabel || '')}</h3>
+    <p class="muted">${esc(area)}${f.itemLabel && f.location ? ' · '+esc(f.itemLabel):''}</p>
+    <p>${esc(f.description)}</p>${ph}</div>`;
+}
+
+function buildReport(w, bname){
+  let t = `REPORTE WALKTHROUGH — ${bname}\nMes: ${nombreMes(w.yearMonth)}\n\n`;
+  const urg = (w.findings||[]).filter(f=>f.urgent);
+  const rest = (w.findings||[]).filter(f=>!f.urgent);
+  if (urg.length){
+    t += `🚨 HALLAZGOS URGENTES (${urg.length}):\n`;
+    urg.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location}: ${f.description}\n`);
+    t += '\n';
+  }
+  if (rest.length){
+    t += `📋 HALLAZGOS (${rest.length}):\n`;
+    rest.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location?f.location+': ':''}${f.description}\n`);
+    t += '\n';
+  }
+  const okAreas = AREAS.filter((a,i) => areaStatus(w,i).c==='b-ok');
+  t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}/8):\n`;
+  okAreas.forEach(a => t += `• ${a.icon} ${a.name}\n`);
+  return t;
+}
+
+async function loadDetail(wid){
+  show('viewDetail');
+  const w = window._months[wid];
+  const bname = Object.values(buildings).find(b=>b.id===w.buildingId)?.name || '';
+  let html = `<button class="back" onclick="show('viewMonths')">← Recorridos</button>
+    <h2>${esc(bname)} · ${nombreMes(w.yearMonth)}</h2>`;
+
+  const urg = (w.findings||[]).filter(f=>f.urgent);
+  const rest = (w.findings||[]).filter(f=>!f.urgent);
+  if (urg.length){ html += '<h3>🚨 Urgentes</h3>'; urg.forEach(f => html += findingCard(f)); }
+  if (rest.length){ html += '<h3>📋 Hallazgos</h3>'; rest.forEach(f => html += findingCard(f)); }
+  if (!urg.length && !rest.length) html += '<div class="card"><p class="muted">Sin hallazgos este mes.</p></div>';
+
+  html += '<h3>Estado por área</h3><div class="grid2">';
+  AREAS.forEach((a,i) => {
+    const s = areaStatus(w,i);
+    html += `<div class="card"><h3>${a.icon} ${a.name}</h3><span class="badge ${s.c}">${s.t}</span></div>`;
+  });
+  html += '</div>';
+
+  const rep = buildReport(w, bname);
+  html += `<h3>Reporte del mes</h3><div class="card">
+    <pre class="report" id="repText">${esc(rep)}</pre>
+    <button class="btn green" onclick="navigator.clipboard.writeText(document.getElementById('repText').innerText);this.textContent='¡Copiado!';">📋 Copiar reporte</button>
+  </div>`;
+  $('viewDetail').innerHTML = html;
+}
+</script>
+</body>
+</html>
