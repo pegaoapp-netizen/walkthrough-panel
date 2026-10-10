@@ -32,7 +32,7 @@
   pre.report { white-space: pre-wrap; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; }
   .btn { background: #1565C0; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; }
   .btn.green { background: #1b7f3b; }
-  input[type=email], input[type=password] { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
+  input[type=email], input[type=password], input[type=text], input[type=number] { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
   #login .card { max-width: 380px; margin: 60px auto; }
   .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -123,7 +123,15 @@ async function loadBuildings(){
   show('viewBuildings');
   const snap = await db.collection('buildings').get();
   buildings = {};
-  let html = '<h2>Edificios</h2>';
+  let html = `<h2>Edificios</h2>
+  <div class="card">
+    <h3>＋ Nuevo edificio</h3>
+    <input type="text" id="nbName" placeholder="Nombre del edificio">
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="flex:1;"><label class="muted">Pisos</label><input type="number" id="nbFloors" value="1" min="1" max="100"></div>
+      <div style="flex:2;"><button class="btn" onclick="addBuilding()">Agregar</button></div>
+    </div>
+  </div>`;
   if (snap.empty) html += '<div class="card"><p class="muted">Todavía no hay edificios sincronizados desde el teléfono.</p></div>';
   snap.forEach(d => {
     const b = d.data(); buildings[d.id] = b;
@@ -155,6 +163,16 @@ async function loadMonths(buildingId){
   });
   window._months = {}; list.forEach(w => window._months[w.id] = w);
   $('viewMonths').innerHTML = html;
+}
+
+// ---------- Agregar edificio desde el panel ----------
+async function addBuilding(){
+  const name = document.getElementById('nbName').value.trim();
+  const floors = Math.min(100, Math.max(1, parseInt(document.getElementById('nbFloors').value) || 1));
+  if (!name){ alert('Escribe el nombre del edificio'); return; }
+  const ref = db.collection('buildings').doc();
+  await ref.set({id: ref.id, name: name, floors: floors});
+  loadBuildings();
 }
 
 // ---------- Detalle ----------
