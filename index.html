@@ -176,24 +176,41 @@ async function addBuilding(){
 }
 
 // ---------- Detalle ----------
-function areaStatus(w, i){
-  const findings = (w.findings||[]).filter(f=>f.areaIndex===i);
+function areaStatus(w, i, floor){
+  const findings = (w.findings||[]).filter(f => f.areaIndex===i && (floor ? f.floor===floor : true));
   if (findings.length) return {t: findings.length + ' hallazgo(s)', c:'b-warn'};
   let ok = 0;
-  for (let j=0;j<AREAS[i].n;j++) if (w.itemStatus && w.itemStatus[i+'-'+j]===1) ok++;
+  for (let j=0;j<AREAS[i].n;j++){
+    // Clave nueva por piso ('PB-0-0'), con fallback a clave vieja ('0-0').
+    if (w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j]===1 || w.itemStatus[i+'-'+j]===1)) ok++;
+  }
   if (ok === AREAS[i].n) return {t:'Sin problemas', c:'b-ok'};
   return {t:'Pendiente', c:''};
 }
 
 function findingCard(f){
   const area = AREAS[f.areaIndex] ? AREAS[f.areaIndex].icon+' '+AREAS[f.areaIndex].name : '';
-  const g = f.photoGeneralUrl || f.photoGeneral;
-  const c = f.photoCloseupUrl || f.photoCloseup;
+  // Fotos: modelo nuevo (photos[]/photoUrls[], hasta 6) con fallback al viejo.
+  // Solo URLs http sirven en web; las rutas locales del teléfono no cargan.
+  let urls = [];
+  if (f.photoUrls && f.photoUrls.length) {
+    urls = f.photoUrls.filter(u => u && String(u).startsWith('http'));
+  }
+  if (!urls.length && f.photos && f.photos.length) {
+    urls = f.photos.filter(p => p && String(p).startsWith('http'));
+  }
+  if (!urls.length) {
+    const g = f.photoGeneralUrl || ((f.photoGeneral||'').startsWith('http') ? f.photoGeneral : null);
+    const c = f.photoCloseupUrl || ((f.photoCloseup||'').startsWith('http') ? f.photoCloseup : null);
+    if (g) urls.push(g);
+    if (c) urls.push(c);
+  }
   let ph = '';
-  if (g || c){
+  if (urls.length){
     ph = '<div class="photos">';
-    if (g) ph += `<div><a href="${g}" target="_blank"><img src="${g}"></a><div class="cap">General</div></div>`;
-    if (c) ph += `<div><a href="${c}" target="_blank"><img src="${c}"></a><div class="cap">De cerca</div></div>`;
+    urls.forEach((u, idx) => {
+      ph += `<div><a href="${u}" target="_blank"><img src="${u}" loading="lazy"></a><div class="cap">Foto ${idx+1}</div></div>`;
+    });
     ph += '</div>';
   }
   return `<div class="card finding ${f.urgent?'urgent':''}">
@@ -203,47 +220,83 @@ function findingCard(f){
     <p>${esc(f.description)}</p>${ph}</div>`;
 }
 
-function buildReport(w, bname){
+function buildReport(w, bname, floors){
   let t = `REPORTE WALKTHROUGH — ${bname}\nMes: ${nombreMes(w.yearMonth)}\n\n`;
   const urg = (w.findings||[]).filter(f=>f.urgent);
   const rest = (w.findings||[]).filter(f=>!f.urgent);
+  const floorOrder = ['PB'];
+  for (let i=1;i<=(floors||1);i++) floorOrder.push(String(i));
+  const fh = fl2 => fl2==='PB' ? 'PLANTA BAJA' : 'PISO '+fl2;
   if (urg.length){
     t += `🚨 HALLAZGOS URGENTES (${urg.length}):\n`;
     urg.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location}: ${f.description}\n`);
     t += '\n';
   }
-  if (rest.length){
-    t += `📋 HALLAZGOS (${rest.length}):\n`;
-    rest.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location?f.location+': ':''}${f.description}\n`);
+  floorOrder.forEach(fl2 => {
+    const ff = rest.filter(f => f.floor===fl2);
+    if (!ff.length) return;
+    t += `📋 ${fh(fl2)} (${ff.length}):\n`;
+    ff.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
+    t += '\n';
+  });
+  const noFloor = rest.filter(f => !f.floor);
+  if (noFloor.length){
+    t += `📋 SIN PISO ASIGNADO (${noFloor.length}):\n`;
+    noFloor.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
     t += '\n';
   }
-  const okAreas = AREAS.filter((a,i) => areaStatus(w,i).c==='b-ok');
-  t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}/8):\n`;
-  okAreas.forEach(a => t += `• ${a.icon} ${a.name}\n`);
+  const okAreas = [];
+  floorOrder.forEach(fl2 => {
+    AREAS.forEach((a,i) => { if (areaStatus(w,i,fl2).c==='b-ok') okAreas.push(`${fh(fl2)} · ${a.icon} ${a.name}`); });
+  });
+  t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}):\n`;
+  okAreas.forEach(a => t += `• ${a}\n`);
   return t;
 }
 
-async function loadDetail(wid){
+let _selFloor = null;
+
+async function loadDetail(wid, floor){
   show('viewDetail');
   const w = window._months[wid];
-  const bname = Object.values(buildings).find(b=>b.id===w.buildingId)?.name || '';
-  let html = `<button class="back" onclick="show('viewMonths')">← Recorridos</button>
-    <h2>${esc(bname)} · ${nombreMes(w.yearMonth)}</h2>`;
+  const bld = Object.values(buildings).find(b=>b.id===w.buildingId) || {};
+  const bname = bld.name || '';
+  const nFloors = bld.floors || 1;
+  if (floor !== undefined) _selFloor = floor;
+  if (!_selFloor) _selFloor = 'PB';
+  const fl2 = _selFloor;
+  const fh = f => f==='PB' ? 'Planta baja' : 'Piso '+f;
 
-  const urg = (w.findings||[]).filter(f=>f.urgent);
-  const rest = (w.findings||[]).filter(f=>!f.urgent);
+  let html = `<button class="back" onclick="show('viewMonths')">← Recorridos</button>
+    <h2>${esc(bname)} · ${nombreMes(w.yearMonth)}</h2>
+    <div class="card"><h3>🏢 ${fh(fl2)}</h3><div style="display:flex;gap:8px;flex-wrap:wrap;">`;
+  const floors = ['PB'];
+  for (let i=1;i<=nFloors;i++) floors.push(String(i));
+  floors.forEach(f => {
+    html += `<button class="btn" style="width:auto;padding:8px 16px;${f===fl2?'':'background:#90a4ae;'}" onclick="loadDetail('${wid}','${f}')">${f==='PB'?'PB':'P'+f}</button>`;
+  });
+  html += `</div></div>`;
+
+  const urg = (w.findings||[]).filter(f=>f.urgent && (!f.floor || f.floor===fl2));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && f.floor===fl2);
   if (urg.length){ html += '<h3>🚨 Urgentes</h3>'; urg.forEach(f => html += findingCard(f)); }
-  if (rest.length){ html += '<h3>📋 Hallazgos</h3>'; rest.forEach(f => html += findingCard(f)); }
-  if (!urg.length && !rest.length) html += '<div class="card"><p class="muted">Sin hallazgos este mes.</p></div>';
+  if (rest.length){ html += `<h3>📋 Hallazgos · ${fh(fl2)}</h3>`; rest.forEach(f => html += findingCard(f)); }
+  if (!urg.length && !rest.length) html += `<div class="card"><p class="muted">Sin hallazgos en ${fh(fl2)} este mes.</p></div>`;
 
   html += '<h3>Estado por área</h3><div class="grid2">';
   AREAS.forEach((a,i) => {
-    const s = areaStatus(w,i);
+    const s = areaStatus(w,i,fl2);
     html += `<div class="card"><h3>${a.icon} ${a.name}</h3><span class="badge ${s.c}">${s.t}</span></div>`;
   });
   html += '</div>';
 
-  const rep = buildReport(w, bname);
+  const rep = buildReport(w, bname, nFloors);
   html += `<h3>Reporte del mes</h3><div class="card">
     <pre class="report" id="repText">${esc(rep)}</pre>
     <button class="btn green" onclick="navigator.clipboard.writeText(document.getElementById('repText').innerText);this.textContent='¡Copiado!';">📋 Copiar reporte</button>
