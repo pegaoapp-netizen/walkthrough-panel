@@ -84,15 +84,50 @@ const db = firebase.firestore();
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const AREAS = [
-  {icon:'🚶', name:'Pasillos y escaleras', n:4},
-  {icon:'🚪', name:'Entradas y lobby', n:5},
-  {icon:'💡', name:'Luces', n:4},
-  {icon:'🧱', name:'Paredes, techos y concreto', n:4},
-  {icon:'🧯', name:'Equipos de seguridad', n:4},
-  {icon:'🅿️', name:'Estacionamientos', n:4},
-  {icon:'🗑️', name:'Cuartos de basura y servicio', n:3},
-  {icon:'🏊', name:'Piscina, patios y áreas comunes', n:3},
+  {icon:'🚶', name:'Pasillos y escaleras', items:[
+    {t:'Objetos personales', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Basura u obstáculos en el paso', ok:'Sin basura', bad:'Con basura'},
+    {t:'Pisos', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Barandas', ok:'Firmes', bad:'Flojas'}]},
+  {icon:'🚪', name:'Entradas y lobby', items:[
+    {t:'Puertas', ok:'Cierran bien', bad:'No cierran'},
+    {t:'Cerraduras', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Cristales', ok:'Sin roturas', bad:'Rotos'},
+    {t:'Luces', ok:'Encendidas', bad:'Apagadas'},
+    {t:'Limpieza del área', ok:'Limpia', bad:'Sucia'}]},
+  {icon:'💡', name:'Luces', items:[
+    {t:'Pasillos', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Escaleras', ok:'Iluminadas', bad:'Sin luz'},
+    {t:'Entradas y lobby', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Estacionamiento', ok:'Iluminado', bad:'Sin luz'}]},
+  {icon:'🧱', name:'Paredes, techos y concreto', items:[
+    {t:'Grietas o desprendimientos', ok:'Sin grietas', bad:'Con grietas'},
+    {t:'Humedad o filtraciones', ok:'Sin humedad', bad:'Con humedad'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Varillas expuestas', ok:'Sin varillas', bad:'Con varillas'}]},
+  {icon:'🧯', name:'Equipos de seguridad', items:[
+    {t:'Extintores', ok:'Visibles y accesibles', bad:'Faltan o bloqueados'},
+    {t:'Gabinetes contra incendios', ok:'En orden', bad:'En desorden'},
+    {t:'Alarmas', ok:'Sin daño', bad:'Dañadas'},
+    {t:'Salidas de emergencia', ok:'Despejadas', bad:'Bloqueadas'}]},
+  {icon:'🅿️', name:'Estacionamientos', items:[
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones', ok:'Sin filtraciones', bad:'Con filtraciones'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Basura o condiciones', ok:'Limpio y seguro', bad:'Sucio o inseguro'}]},
+  {icon:'🗑️', name:'Cuartos de basura y servicio', items:[
+    {t:'Acumulación de basura', ok:'Sin acumulación', bad:'Acumulada'},
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones u olores', ok:'Sin filtraciones', bad:'Con filtraciones'}]},
+  {icon:'🏊', name:'Piscina, patios y áreas comunes', items:[
+    {t:'Limpieza general', ok:'Adecuada', bad:'Deficiente'},
+    {t:'Mantenimiento', ok:'Al día', bad:'Atrasado'},
+    {t:'Condiciones', ok:'Seguras', bad:'Inseguras'}]},
 ];
+function itemLabel(i, j, st){
+  const it = AREAS[i].items[j];
+  return it.t + ': ' + (st===2 ? it.bad : it.ok);
+}
 function nombreMes(ym){ const p = ym.split('-'); return MESES[parseInt(p[1])-1] + ' ' + p[0]; }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fl(f){ return f.floor ? 'Piso ' + esc(f.floor) + ' · ' : ''; }
@@ -179,13 +214,26 @@ async function addBuilding(){
 function areaStatus(w, i, floor){
   const findings = (w.findings||[]).filter(f => f.areaIndex===i && (floor ? f.floor===floor : true));
   if (findings.length) return {t: findings.length + ' hallazgo(s)', c:'b-warn'};
-  let ok = 0;
-  for (let j=0;j<AREAS[i].n;j++){
+  let ok = 0, bad = 0;
+  for (let j=0;j<AREAS[i].items.length;j++){
     // Clave nueva por piso ('PB-0-0'), con fallback a clave vieja ('0-0').
-    if (w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j]===1 || w.itemStatus[i+'-'+j]===1)) ok++;
+    // 1 = bien ✓, 2 = mal ✗.
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===1) ok++;
+    if (s===2) bad++;
   }
-  if (ok === AREAS[i].n) return {t:'Sin problemas', c:'b-ok'};
+  if (bad>0) return {t: bad + ' punto(s) mal', c:'b-urg'};
+  if (ok === AREAS[i].items.length) return {t:'Sin problemas', c:'b-ok'};
   return {t:'Pendiente', c:''};
+}
+
+function badItems(w, i, floor){
+  const out = [];
+  for (let j=0;j<AREAS[i].items.length;j++){
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===2) out.push(itemLabel(i, j, 2));
+  }
+  return out;
 }
 
 function findingCard(f){
@@ -222,8 +270,11 @@ function findingCard(f){
 
 function buildReport(w, bname, floors){
   let t = `REPORTE WALKTHROUGH — ${bname}\nMes: ${nombreMes(w.yearMonth)}\n\n`;
-  const urg = (w.findings||[]).filter(f=>f.urgent);
-  const rest = (w.findings||[]).filter(f=>!f.urgent);
+  // No listar hallazgos vacíos (sin descripción, ubicación ni fotos).
+  const isEmptyF = f => !(f.description||'').trim() && !(f.location||'').trim() &&
+    !((f.photoUrls||[]).length || (f.photos||[]).filter(p=>String(p).startsWith('http')).length || f.photoGeneralUrl || f.photoCloseupUrl);
+  const urg = (w.findings||[]).filter(f=>f.urgent && !isEmptyF(f));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && !isEmptyF(f));
   const floorOrder = ['PB'];
   for (let i=1;i<=(floors||1);i++) floorOrder.push(String(i));
   const fh = fl2 => fl2==='PB' ? 'PLANTA BAJA' : 'PISO '+fl2;
@@ -254,6 +305,17 @@ function buildReport(w, bname, floors){
   const okAreas = [];
   floorOrder.forEach(fl2 => {
     AREAS.forEach((a,i) => { if (areaStatus(w,i,fl2).c==='b-ok') okAreas.push(`${fh(fl2)} · ${a.icon} ${a.name}`); });
+  });
+  // Puntos marcados como mal (✗) por piso.
+  floorOrder.forEach(fl2 => {
+    const bad = [];
+    AREAS.forEach((a,i) => {
+      badItems(w,i,fl2).forEach(label => bad.push(`• [${a.name}] ${label}`));
+    });
+    if (!bad.length) return;
+    t += `⚠️ ${fh(fl2)} — PUNTOS MAL (${bad.length}):\n`;
+    bad.forEach(x => t += x + '\n');
+    t += '\n';
   });
   t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}):\n`;
   okAreas.forEach(a => t += `• ${a}\n`);
@@ -288,6 +350,12 @@ async function loadDetail(wid, floor){
   if (urg.length){ html += '<h3>🚨 Urgentes</h3>'; urg.forEach(f => html += findingCard(f)); }
   if (rest.length){ html += `<h3>📋 Hallazgos · ${fh(fl2)}</h3>`; rest.forEach(f => html += findingCard(f)); }
   if (!urg.length && !rest.length) html += `<div class="card"><p class="muted">Sin hallazgos en ${fh(fl2)} este mes.</p></div>`;
+
+  const badHtml = [];
+  AREAS.forEach((a,i) => {
+    badItems(w,i,fl2).forEach(label => badHtml.push(`<div class="card finding"><h3>✗ ${esc(a.icon)} ${esc(a.name)}</h3><p>${esc(label)}</p></div>`));
+  });
+  if (badHtml.length) html += `<h3>⚠️ Puntos marcados como mal</h3>` + badHtml.join('');
 
   html += '<h3>Estado por área</h3><div class="grid2">';
   AREAS.forEach((a,i) => {
