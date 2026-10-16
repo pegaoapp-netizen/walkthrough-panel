@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkCheck — Recorridos profesionales de propiedades</title>
+<meta name="description" content="WalkCheck: recorridos mensuales documentados para administradores de propiedades. MTG Pro: gestión completa para compañías de handyman.">
+<style>
+:root{
+  --navy:#0f2a4a; --blue:#1a6fd4; --sky:#e8f1fc; --ink:#1c2733;
+  --muted:#5b6b7c; --green:#22a06b; --gold:#c9a227; --bg:#f7fafd;
+  --card:#ffffff; --radius:18px; --shadow:0 10px 30px rgba(15,42,74,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+/* NAV */
+nav{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50}
+nav .wrap{display:flex;align-items:center;gap:18px;padding:14px 22px}
+.brand{font-weight:800;font-size:1.25rem;letter-spacing:.3px;color:#fff;text-decoration:none}
+.brand span{color:#7fb4f0}
+nav .links{margin-left:auto;display:flex;gap:20px;align-items:center}
+nav .links a{color:#cfe2f7;text-decoration:none;font-weight:600;font-size:.95rem}
+nav .links a:hover{color:#fff}
+.lang-toggle{background:transparent;border:1px solid #3a5a84;color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:.85rem}
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#16467e 60%,#1a6fd4 100%);color:#fff;padding:84px 0 70px;text-align:center}
+.hero h1{font-size:2.6rem;line-height:1.15;margin-bottom:16px;font-weight:800}
+.hero h1 .hl{color:#9fd0ff}
+.hero p.sub{font-size:1.15rem;color:#d7e7fa;max-width:640px;margin:0 auto 34px}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:15px 34px;border-radius:999px;font-weight:800;font-size:1.02rem;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.22)}
+.btn-green{background:var(--green);color:#fff}
+.btn-outline{border:2px solid #9fd0ff;color:#fff}
+.hero .note{margin-top:22px;font-size:.9rem;color:#a9c6e8}
+/* SECTIONS */
+section{padding:70px 0}
+h2.sec{font-size:2rem;text-align:center;margin-bottom:12px;color:var(--navy);font-weight:800}
+p.sec-sub{text-align:center;color:var(--muted);max-width:640px;margin:0 auto 44px;font-size:1.05rem}
+/* FEATURES */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+.feat{background:var(--card);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow)}
+.feat .icon{font-size:2.2rem;margin-bottom:12px}
+.feat h3{font-size:1.2rem;margin-bottom:10px;color:var(--navy)}
+.feat ul{list-style:none;color:var(--muted)}
+.feat ul li{padding:7px 0 7px 28px;position:relative}
+.feat ul li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:800}
+/* PRICING */
+.pricing{background:#fff}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:26px;max-width:860px;margin:0 auto}
+.price-card{background:var(--bg);border:2px solid #dbe7f5;border-radius:22px;padding:38px 34px;text-align:center;position:relative;transition:transform .15s,box-shadow .15s}
+.price-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.price-card.featured{border-color:var(--blue);background:linear-gradient(180deg,#f0f6ff,#fff)}
+.badge{position:absolute;top:-15px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:.78rem;font-weight:800;padding:6px 18px;border-radius:999px;letter-spacing:.5px}
+.price-card h3{font-size:1.35rem;color:var(--navy);margin-bottom:6px}
+.price-card .for{color:var(--muted);font-size:.95rem;margin-bottom:18px}
+.price{font-size:3rem;font-weight:800;color:var(--navy)}
+.price small{font-size:1rem;color:var(--muted);font-weight:600}
+.price-card ul{list-style:none;text-align:left;margin:24px 0 30px;color:var(--ink)}
+.price-card ul li{padding:8px 0 8px 30px;position:relative}
+.price-card ul li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:800}
+.btn-block{display:block;width:100%;text-align:center}
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;counter-reset:step}
+.step{background:var(--card);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);position:relative}
+.step .num{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800;font-size:1.3rem;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.step h3{margin-bottom:8px;color:var(--navy)}
+.step p{color:var(--muted);font-size:.96rem}
+/* FAQ */
+.faq{max-width:720px;margin:0 auto}
+.faq details{background:var(--card);border-radius:14px;padding:18px 22px;margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer}
+.faq summary{font-weight:700;color:var(--navy)}
+.faq p{margin-top:10px;color:var(--muted)}
+/* FOOTER */
+footer{background:var(--navy);color:#9db8d6;padding:44px 0;text-align:center;font-size:.92rem}
+footer a{color:#cfe2f7}
+footer .brand{font-size:1.1rem;margin-bottom:10px;display:block}
+/* FLOAT WA */
+.wa-float{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:1.8rem;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:60;text-decoration:none}
+@media(max-width:640px){.hero h1{font-size:1.9rem}nav .links a{display:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#">Walk<span>Check</span></a>
+    <div class="links">
+      <a href="#planes" data-es="Planes" data-en="Plans">Planes</a>
+      <a href="#como" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+      <a href="#faq" data-es="Preguntas" data-en="FAQ">Preguntas</a>
+      <button class="lang-toggle" onclick="toggleLang()">EN</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1 data-es="Recorridos de propiedades, <span class='hl'>documentados como un profesional</span>" data-en="Property walkthroughs, <span class='hl'>documented like a pro</span>">Recorridos de propiedades, <span class="hl">documentados como un profesional</span></h1>
+    <p class="sub" data-es="WalkCheck para dueños y administradores. MTG Pro para compañías de mantenimiento. Fotos, reportes y equipo — todo en un solo lugar." data-en="WalkCheck for owners and managers. MTG Pro for maintenance companies. Photos, reports and crew — all in one place.">WalkCheck para dueños y administradores. MTG Pro para compañías de mantenimiento. Fotos, reportes y equipo — todo en un solo lugar.</p>
+    <div class="cta-row">
+      <a class="btn btn-green" href="#planes" data-es="Ver planes" data-en="See plans">Ver planes</a>
+      <a class="btn btn-outline" id="waHero" href="#" data-es="Hablar por WhatsApp" data-en="Chat on WhatsApp">Hablar por WhatsApp</a>
+    </div>
+    <p class="note" data-es="Sin contratos forzosos · Cancela cuando quieras" data-en="No forced contracts · Cancel anytime">Sin contratos forzosos · Cancela cuando quieras</p>
+  </div>
+</header>
+
+<section id="soluciones">
+  <div class="wrap">
+    <h2 class="sec" data-es="Dos soluciones, un estándar" data-en="Two solutions, one standard">Dos soluciones, un estándar</h2>
+    <p class="sec-sub" data-es="Elige según tu rol. Ambas incluyen app móvil y panel web." data-en="Choose by your role. Both include mobile app and web panel.">Elige según tu rol. Ambas incluyen app móvil y panel web.</p>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="icon">🏢</div>
+        <h3>WalkCheck</h3>
+        <ul>
+          <li data-es="Recorridos mensuales piso por piso" data-en="Monthly floor-by-floor walkthroughs">Recorridos mensuales piso por piso</li>
+          <li data-es="Fotos de hallazgos con ubicación exacta" data-en="Finding photos with exact location">Fotos de hallazgos con ubicación exacta</li>
+          <li data-es="Alertas urgentes por WhatsApp" data-en="Urgent alerts via WhatsApp">Alertas urgentes por WhatsApp</li>
+          <li data-es="Panel web para la oficina" data-en="Web panel for the office">Panel web para la oficina</li>
+          <li data-es="Reporte mensual listo para enviar" data-en="Monthly report ready to send">Reporte mensual listo para enviar</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <div class="icon">🔧</div>
+        <h3>MTG Pro</h3>
+        <ul>
+          <li data-es="Trabajos, clientes y calendario" data-en="Jobs, clients and calendar">Trabajos, clientes y calendario</li>
+          <li data-es="Equipo con roles y hoja de tiempo" data-en="Team with roles and timesheet">Equipo con roles y hoja de tiempo</li>
+          <li data-es="Estimados y facturas con IA" data-en="AI estimates and invoices">Estimados y facturas con IA</li>
+          <li data-es="Múltiples compañías y sucursales" data-en="Multiple companies and branches">Múltiples compañías y sucursales</li>
+          <li data-es="Check-in/out con GPS" data-en="GPS check-in/out">Check-in/out con GPS</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="planes" class="pricing">
+  <div class="wrap">
+    <h2 class="sec" data-es="Planes simples" data-en="Simple plans">Planes simples</h2>
+    <p class="sec-sub" data-es="Empieza hoy por WhatsApp. Activamos tu cuenta el mismo día." data-en="Start today via WhatsApp. We activate your account the same day.">Empieza hoy por WhatsApp. Activamos tu cuenta el mismo día.</p>
+    <div class="price-grid">
+      <div class="price-card">
+        <h3>WalkCheck</h3>
+        <p class="for" data-es="Dueños y administradores de propiedades" data-en="Property owners and managers">Dueños y administradores de propiedades</p>
+        <div class="price">$99<small data-es="/mes" data-en="/mo">/mes</small></div>
+        <ul>
+          <li data-es="Recorridos ilimitados" data-en="Unlimited walkthroughs">Recorridos ilimitados</li>
+          <li data-es="Hasta 3 edificios" data-en="Up to 3 buildings">Hasta 3 edificios</li>
+          <li data-es="Panel web con fotos" data-en="Web panel with photos">Panel web con fotos</li>
+          <li data-es="Alertas urgentes por WhatsApp" data-en="Urgent WhatsApp alerts">Alertas urgentes por WhatsApp</li>
+          <li data-es="Soporte en español" data-en="Spanish-language support">Soporte en español</li>
+        </ul>
+        <a class="btn btn-green btn-block wa-plan" data-plan="WalkCheck ($99/mes)" href="#" data-es="Empezar por WhatsApp" data-en="Start on WhatsApp">Empezar por WhatsApp</a>
+      </div>
+      <div class="price-card featured">
+        <div class="badge" data-es="COMPAÑÍAS" data-en="COMPANIES">COMPAÑÍAS</div>
+        <h3>MTG Pro</h3>
+        <p class="for" data-es="Compañías de mantenimiento y handyman" data-en="Maintenance & handyman companies">Compañías de mantenimiento y handyman</p>
+        <div class="price">$249<small data-es="/mes" data-en="/mo">/mes</small></div>
+        <ul>
+          <li data-es="Todo lo de WalkCheck" data-en="Everything in WalkCheck">Todo lo de WalkCheck</li>
+          <li data-es="Trabajos y clientes ilimitados" data-en="Unlimited jobs & clients">Trabajos y clientes ilimitados</li>
+          <li data-es="Equipo, roles y hoja de tiempo" data-en="Team, roles & timesheet">Equipo, roles y hoja de tiempo</li>
+          <li data-es="Estimados y facturas con IA" data-en="AI estimates & invoices">Estimados y facturas con IA</li>
+          <li data-es="Múltiples compañías" data-en="Multiple companies">Múltiples compañías</li>
+        </ul>
+        <a class="btn btn-green btn-block wa-plan" data-plan="MTG Pro ($249/mes)" href="#" data-es="Empezar por WhatsApp" data-en="Start on WhatsApp">Empezar por WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="como">
+  <div class="wrap">
+    <h2 class="sec" data-es="Cómo empezar" data-en="How to start">Cómo empezar</h2>
+    <p class="sec-sub" data-es="En minutos, sin instalaciones complicadas." data-en="In minutes, no complicated installs.">En minutos, sin instalaciones complicadas.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3 data-es="Escríbenos" data-en="Message us">Escríbenos</h3>
+        <p data-es="Toca el botón de WhatsApp y dinos qué plan quieres. Te respondemos el mismo día." data-en="Tap the WhatsApp button and tell us which plan you want. We reply the same day.">Toca el botón de WhatsApp y dinos qué plan quieres. Te respondemos el mismo día.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3 data-es="Activamos tu cuenta" data-en="We activate your account">Activamos tu cuenta</h3>
+        <p data-es="Creamos tu compañía y tu usuario administrador. Tú creas los de tu equipo." data-en="We create your company and admin user. You create your team's.">Creamos tu compañía y tu usuario administrador. Tú creas los de tu equipo.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3 data-es="A trabajar" data-en="Get to work">A trabajar</h3>
+        <p data-es="Baja la app, entra y empieza tu primer recorrido o trabajo hoy mismo." data-en="Download the app, log in and start your first walkthrough or job today.">Baja la app, entra y empieza tu primer recorrido o trabajo hoy mismo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="pricing">
+  <div class="wrap">
+    <h2 class="sec" data-es="Preguntas frecuentes" data-en="FAQ">Preguntas frecuentes</h2>
+    <div class="faq">
+      <details>
+        <summary data-es="¿Necesito tarjeta para empezar?" data-en="Do I need a card to start?">¿Necesito tarjeta para empezar?</summary>
+        <p data-es="No. Empiezas por WhatsApp y coordinamos el pago directamente. Aceptamos tarjeta, Apple Pay y Google Pay." data-en="No. You start via WhatsApp and we arrange payment directly. We accept card, Apple Pay and Google Pay.">No. Empiezas por WhatsApp y coordinamos el pago directamente. Aceptamos tarjeta, Apple Pay y Google Pay.</p>
+      </details>
+      <details>
+        <summary data-es="¿Funciona en iPhone?" data-en="Does it work on iPhone?">¿Funciona en iPhone?</summary>
+        <p data-es="Sí. La app funciona en iPhone y Android, más el panel web para la oficina." data-en="Yes. The app works on iPhone and Android, plus the web panel for the office.">Sí. La app funciona en iPhone y Android, más el panel web para la oficina.</p>
+      </details>
+      <details>
+        <summary data-es="¿Mis empleados ven los precios?" data-en="Do my employees see prices?">¿Mis empleados ven los precios?</summary>
+        <p data-es="Tú decides por rol. Los técnicos ven solo sus trabajos; los precios los ven dueños y gerentes." data-en="You decide by role. Technicians only see their jobs; owners and managers see prices.">Tú decides por rol. Los técnicos ven solo sus trabajos; los precios los ven dueños y gerentes.</p>
+      </details>
+      <details>
+        <summary data-es="¿Puedo cancelar?" data-en="Can I cancel?">¿Puedo cancelar?</summary>
+        <p data-es="Sí, cuando quieras, sin penalidad. Tus datos se conservan 30 días por si regresas." data-en="Yes, anytime, no penalty. Your data is kept 30 days in case you return.">Sí, cuando quieras, sin penalidad. Tus datos se conservan 30 días por si regresas.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="brand">Walk<span style="color:#7fb4f0">Check</span></span>
+    <p>© 2026 WalkCheck · Miami, FL</p>
+    <p style="margin-top:8px"><a id="waFooter" href="#">WhatsApp</a> · <a href="mailto:info@walkcheck.app">info@walkcheck.app</a></p>
+  </div>
+</footer>
+
+<a class="wa-float" id="waFloat" href="#" aria-label="WhatsApp">💬</a>
+
+<script>
+var WA_NUMBER = "13055824136";
+function waLink(msg){
+  return "https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(msg);
+}
+var lang = "es";
+var STR = {
+  es: {
+    hero: "Hola, quiero información de WalkCheck.",
+    plan: function(p){ return "Hola, me interesa el plan "+p+" de WalkCheck. ¿Cómo empezamos?"; }
+  },
+  en: {
+    hero: "Hi, I'd like info about WalkCheck.",
+    plan: function(p){ return "Hi, I'm interested in the "+p+" WalkCheck plan. How do we start?"; }
+  }
+};
+function refreshWa(){
+  document.getElementById("waHero").href = waLink(STR[lang].hero);
+  document.getElementById("waFloat").href = waLink(STR[lang].hero);
+  document.getElementById("waFooter").href = waLink(STR[lang].hero);
+  document.querySelectorAll(".wa-plan").forEach(function(a){
+    a.href = waLink(STR[lang].plan(a.getAttribute("data-plan")));
+  });
+}
+function toggleLang(){
+  lang = (lang==="es") ? "en" : "es";
+  document.documentElement.lang = lang;
+  document.querySelector(".lang-toggle").textContent = (lang==="es") ? "EN" : "ES";
+  document.querySelectorAll("[data-es]").forEach(function(el){
+    el.innerHTML = el.getAttribute("data-"+lang);
+  });
+  refreshWa();
+}
+refreshWa();
+</script>
+</body>
+</html>
