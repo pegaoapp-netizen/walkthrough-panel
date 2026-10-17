@@ -1,578 +1,379 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WalkCheck — Recorridos profesionales de propiedades</title>
-<meta name="description" content="WalkCheck: recorridos mensuales documentados para administradores de condominios. MTG Pro: gestión completa para compañías de handyman.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough · Panel</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-:root{
-  --navy:#0E2A47; --navy2:#0A1F36; --navy3:#16467E;
-  --green:#7AC142; --green-d:#68A838;
-  --wa:#25D366; --wa-d:#1DA851;
-  --bg:#F7FAFD; --card:#FFFFFF; --txt:#1A2B3C; --mut:#5B6B7C;
-  --line:#E3EAF2; --radius:16px;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:#fff;line-height:1.6}
-.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
-/* ===== HEADER ===== */
-header{position:sticky;top:0;z-index:50;background:var(--navy);box-shadow:0 2px 12px rgba(0,0,0,.25)}
-.hd{display:flex;align-items:center;gap:28px;height:68px}
-.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:22px;text-decoration:none}
-.logo .lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#fff,#D7E7FA);display:flex;align-items:center;justify-content:center;font-size:22px}
-nav.main{display:flex;gap:4px;margin-left:8px}
-nav.main a, .dd>span{color:#D7E7FA;text-decoration:none;font-size:15px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:block}
-nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
-.dd{position:relative}
-.dd-menu{position:absolute;top:110%;left:0;min-width:250px;background:#fff;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.22);padding:10px;display:none}
-.dd:hover .dd-menu{display:block}
-.dd-menu a{color:var(--txt)!important;padding:11px 14px!important;font-size:14.5px}
-.dd-menu a:hover{background:var(--bg)}
-.dd-menu a b{display:block;font-size:15px}
-.dd-menu a small{color:var(--mut);font-weight:400}
-.hd-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:12px;padding:13px 26px;font-size:16px;transition:.15s;border:0;cursor:pointer}
-.btn-green{background:var(--green);color:#0A1F36}
-.btn-green:hover{background:var(--green-d);transform:translateY(-1px)}
-.btn-wa{background:var(--wa);color:#fff}
-.btn-wa:hover{background:var(--wa-d);transform:translateY(-1px)}
-.btn-outline{border:2px solid var(--line);color:var(--txt);background:#fff}
-.btn-outline:hover{border-color:var(--green)}
-.btn-sm{padding:10px 20px;font-size:14.5px}
-.lang-toggle{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:13.5px}
-.lang-toggle:hover{border-color:#fff}
-/* ===== HERO ===== */
-.hero{background:linear-gradient(160deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);color:#fff;padding:88px 0 96px;position:relative;overflow:hidden}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-.hero h1{font-size:46px;line-height:1.15;font-weight:800;letter-spacing:-.5px}
-.hero h1 .hl{color:var(--green)}
-.hero p.sub{color:#BFD6F2;font-size:19px;margin:20px 0 32px;max-width:520px}
-.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
-.hero-note{margin-top:18px;color:#8FA9C9;font-size:14px}
-.trust{display:flex;gap:26px;margin-top:34px;flex-wrap:wrap}
-.trust div{display:flex;align-items:center;gap:9px;color:#D7E7FA;font-size:14.5px;font-weight:600}
-/* phone mockup */
-.phone{width:290px;margin:0 auto;background:#101418;border-radius:44px;padding:14px;box-shadow:0 30px 60px rgba(0,0,0,.45)}
-.screen{background:#fff;border-radius:32px;overflow:hidden;height:560px;display:flex;flex-direction:column}
-.scr-hd{background:linear-gradient(135deg,var(--navy),var(--navy3));color:#fff;padding:18px 16px 14px}
-.scr-hd b{font-size:16px}.scr-hd small{opacity:.75;font-size:12px}
-.scr-bd{padding:12px;flex:1;overflow:hidden}
-.chk{background:var(--bg);border-radius:12px;padding:11px 12px;margin-bottom:9px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600}
-.dot{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800}
-.dot.ok{background:var(--green)}.dot.bad{background:#E5484D}.dot.pend{background:#CBD6E2}
-.scr-ft{padding:12px}
-.scr-btn{background:var(--wa);color:#fff;text-align:center;border-radius:12px;padding:13px;font-weight:700;font-size:14.5px}
-/* ===== PILARES ===== */
-.sec{padding:84px 0}
-.sec h2{font-size:34px;font-weight:800;text-align:center;letter-spacing:-.4px}
-.sec .lede{text-align:center;color:var(--mut);font-size:18px;max-width:640px;margin:14px auto 0}
-.tabs{display:flex;gap:10px;justify-content:center;margin:36px 0;flex-wrap:wrap}
-.tab{border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 22px;font-weight:700;font-size:15.5px;cursor:pointer;color:var(--mut)}
-.tab.on{border-color:var(--green);color:var(--navy);background:#F2F9EA}
-.pillar{display:none;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--bg);border-radius:24px;padding:48px}
-.pillar.on{display:grid}
-.pillar h3{font-size:26px;margin-bottom:14px}
-.feat{list-style:none;margin-top:18px}
-.feat li{display:flex;gap:12px;margin-bottom:14px;font-size:16px}
-.feat li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
-/* ===== PRECIOS ===== */
-#precios{background:var(--navy2);color:#fff}
-#precios h2{color:#fff}
-#precios .lede{color:#BFD6F2}
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px;align-items:stretch}
-.plan{background:#fff;color:var(--txt);border-radius:20px;padding:36px 30px;position:relative;display:flex;flex-direction:column}
-.plan.pop{border:4px solid var(--green);transform:scale(1.04);box-shadow:0 24px 60px rgba(122,193,66,.25)}
-.pop-tag{position:absolute;top:-17px;left:50%;transform:translateX(-50%);background:var(--green);color:#0A1F36;font-weight:800;font-size:13px;padding:7px 20px;border-radius:20px;letter-spacing:.5px;white-space:nowrap}
-.plan h3{font-size:21px}
-.plan .price{font-size:44px;font-weight:800;margin:10px 0 2px}
-.plan .price small{font-size:16px;color:var(--mut);font-weight:600}
-.plan .desc{color:var(--mut);font-size:14.5px;margin-bottom:20px}
-.plan ul{list-style:none;margin-bottom:28px;flex:1}
-.plan li{display:flex;gap:10px;margin-bottom:11px;font-size:15px}
-.plan li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
-.plan .btn{width:100%;text-align:center}
-.fine{text-align:center;color:#8FA9C9;font-size:14px;margin-top:28px}
-/* ===== MTG PRO ===== */
-.mtg{background:linear-gradient(140deg,#101418,#1d2733);color:#fff;border-radius:28px;padding:60px;margin-top:70px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
-.mtg h2{color:#fff;text-align:left;font-size:32px}
-.mtg .tag{display:inline-block;background:#FF6B00;color:#fff;font-weight:800;font-size:13px;padding:7px 18px;border-radius:20px;margin-bottom:16px;letter-spacing:.5px}
-.mtg p{color:#B9C6D6;font-size:17px;margin:14px 0 24px}
-.mtg ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
-.mtg li{display:flex;gap:10px;font-size:15.5px;color:#E6EDF5}
-.mtg li::before{content:"✓";color:#FF6B00;font-weight:800;flex:none}
-.mtg .price{font-size:40px;font-weight:800}.mtg .price small{font-size:16px;color:#B9C6D6;font-weight:600}
-/* ===== FAQ ===== */
-.faq{max-width:760px;margin:40px auto 0}
-.faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;padding:0;overflow:hidden}
-.faq summary{padding:20px 24px;font-weight:700;font-size:16.5px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-size:24px;color:var(--green);font-weight:800}
-.faq details[open] summary::after{content:"–"}
-.faq .a{padding:0 24px 22px;color:var(--mut);font-size:15.5px}
-/* ===== CTA FINAL ===== */
-.cta-final{background:linear-gradient(160deg,var(--navy),var(--navy3));border-radius:28px;padding:64px 40px;text-align:center;color:#fff;margin:84px 0}
-.cta-final h2{color:#fff;font-size:32px}
-.cta-final p{color:#BFD6F2;margin:14px 0 30px;font-size:18px}
-/* ===== FOOTER ===== */
-footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
-.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px}
-.fcols h4{color:#fff;font-size:15px;margin-bottom:16px}
-.fcols a{display:block;color:#BFD6F2;text-decoration:none;font-size:14.5px;margin-bottom:10px}
-.fcols a:hover{color:#fff}
-.fbot{border-top:1px solid rgba(255,255,255,.12);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px;color:#8FA9C9}
-/* ===== WA FLOAT ===== */
-.wa-float{position:fixed;right:22px;bottom:22px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--wa);display:flex;align-items:center;justify-content:center;font-size:30px;text-decoration:none;box-shadow:0 10px 28px rgba(37,211,102,.5);transition:.15s}
-.wa-float:hover{transform:scale(1.08)}
-@media(max-width:900px){
-  nav.main{display:none}
-  .hero .wrap,.pillar,.mtg{grid-template-columns:1fr}
-  .hero h1{font-size:34px}
-  .plans{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
-  .plan.pop{transform:none}
-  .fcols{grid-template-columns:1fr 1fr}
-  .phone{width:260px}.screen{height:520px}
-}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  header { background: #1565C0; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 20px; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+  .card h3 { margin: 0 0 4px; }
+  .muted { color: #777; font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
+  .b-ok { background: #e6f4ea; color: #1b7f3b; }
+  .b-warn { background: #fff3e0; color: #b26a00; }
+  .b-urg { background: #fdecea; color: #b3261e; }
+  .finding { border-left: 4px solid #ff9800; }
+  .finding.urgent { border-left-color: #d32f2f; background: #fff8f8; }
+  .photos { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .photos img { width: 160px; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+  .photos .cap { font-size: 11px; color: #777; text-align: center; }
+  .back { background: none; border: none; color: #1565C0; font-size: 15px; cursor: pointer; padding: 0 0 12px; }
+  pre.report { white-space: pre-wrap; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; }
+  .btn { background: #1565C0; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn.green { background: #1b7f3b; }
+  input[type=email], input[type=password], input[type=text], input[type=number] { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
+  #login .card { max-width: 380px; margin: 60px auto; }
+  .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-
 <header>
-  <div class="wrap hd">
-    <a class="logo" href="#"><span class="lg">🏢</span>WalkCheck</a>
-    <nav class="main">
-      <div class="dd"><span data-i18n="navProd">Producto ▾</span>
-        <div class="dd-menu">
-          <a href="#pilares"><b data-i18n="ddWc">WalkCheck</b><small data-i18n="ddWcS">Recorridos de condominios</small></a>
-          <a href="#mtgpro"><b>MTG Pro</b><small data-i18n="ddMtgS">Gestión para handymen</small></a>
-        </div>
-      </div>
-      <a href="#precios" data-i18n="navPrecios">Precios</a>
-      <a href="#faq" data-i18n="navFaq">Preguntas</a>
-    </nav>
-    <div class="hd-right">
-      <button class="lang-toggle" onclick="toggleLang()">EN</button>
-      <a class="btn btn-green btn-sm" id="waHd" href="#" data-i18n="navCta">Hablar con Ventas</a>
-    </div>
-  </div>
+  <h1>🏢 Walkthrough</h1>
+  <button id="btnLogout" hidden>Cerrar sesión</button>
 </header>
 
-<section class="hero">
-  <div class="wrap">
-    <div>
-      <h1 data-i18n="heroT">La solución todo-en-uno para profesionales de <span class="hl">condominios</span></h1>
-      <p class="sub" data-i18n="heroS">Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.</p>
-      <div class="hero-cta">
-        <a class="btn btn-wa" id="waHero" href="#" data-i18n="heroCta1">💬 Agenda una demo</a>
-        <a class="btn btn-outline" href="#precios" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-i18n="heroCta2">Ver precios</a>
-      </div>
-      <p class="hero-note" data-i18n="heroNote">Sin tarjeta de crédito · Te activamos por WhatsApp</p>
-      <div class="trust">
-        <div>📋 <span data-i18n="t1">Checklists por área</span></div>
-        <div>📸 <span data-i18n="t2">Fotos con ubicación</span></div>
-        <div>📲 <span data-i18n="t3">Reporte por WhatsApp</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="phone"><div class="screen">
-        <div class="scr-hd"><b>🏢 <span data-i18n="phT">Recorrido · Octubre</span></b><br><small data-i18n="phS">8000 Harding Ave · Piso 3</small></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph1">Pasillos — Sin objetos</span></div>
-          <div class="chk"><span class="dot bad">✕</span><span data-i18n="ph2">Estacionamientos — Con objetos</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph3">Lobby — Todo en orden</span></div>
-          <div class="chk"><span class="dot pend">·</span><span data-i18n="ph4">Cuarto de basura — Pendiente</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph5">Piscina — Todo en orden</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" data-i18n="phBtn">📲 Enviar reporte por WhatsApp</div></div>
-      </div></div>
-    </div>
-  </div>
-</section>
-
-<section class="sec" id="pilares">
-  <div class="wrap">
-    <h2 data-i18n="pilT">Todo lo que necesitas, en 4 pilares</h2>
-    <p class="lede" data-i18n="pilS">Del recorrido al reporte final, WalkCheck cubre el proceso completo.</p>
-    <div class="tabs">
-      <button class="tab on" onclick="tab(0)" data-i18n="tab1">📋 Documenta</button>
-      <button class="tab" onclick="tab(1)" data-i18n="tab2">📲 Reporta</button>
-      <button class="tab" onclick="tab(2)" data-i18n="tab3">👥 Organiza</button>
-      <button class="tab" onclick="tab(3)" data-i18n="tab4">📅 Revisa</button>
-    </div>
-
-    <div class="pillar on" id="p0">
-      <div>
-        <h3 data-i18n="p1t">Documenta cada recorrido como un profesional</h3>
-        <ul class="feat">
-          <li data-i18n="p1a">Checklist por áreas: pasillos, lobby, estacionamientos, piscina y más</li>
-          <li data-i18n="p1b">Hasta 6 fotos por hallazgo, con ubicación y piso exactos</li>
-          <li data-i18n="p1c">Botón de emergencia que avisa por WhatsApp al instante</li>
-          <li data-i18n="p1d">Funciona en Android y panel web para la oficina</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📋 <span data-i18n="m1t">Checklist · Estacionamientos</span></b></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1a">Objetos personales — Sin objetos</span></div>
-          <div class="chk"><span class="dot bad">✕</span><span data-i18n="m1b">Basura — Con objetos</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1c">Iluminación — Todo bien</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1d">Señalización — Todo bien</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--green)" data-i18n="m1btn">＋ Agregar hallazgo con foto</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p1">
-      <div>
-        <h3 data-i18n="p2t">Reportes listos para mandar por WhatsApp</h3>
-        <ul class="feat">
-          <li data-i18n="p2a">Un toque genera el reporte del mes, agrupado por piso</li>
-          <li data-i18n="p2b">Formato profesional con negritas, listo para el cliente</li>
-          <li data-i18n="p2c">Corrector automático de errores de escritura</li>
-          <li data-i18n="p2d">Las fotos quedan guardadas en la app y el panel</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📲 <span data-i18n="m2t">Reporte · Octubre 2026</span></b></div>
-        <div class="scr-bd" style="font-size:13px">
-          <div class="chk" style="display:block"><b>REPORTE WALKCHECK</b><br><span data-i18n="m2a">Fecha: 16 Oct 2026</span></div>
-          <div class="chk" style="display:block"><b>PLANTA BAJA:</b><br>✅ <span data-i18n="m2b">Estacionamientos: todo en buen orden</span></div>
-          <div class="chk" style="display:block"><b>PISO 1:</b><br>✅ <span data-i18n="m2c">Lobby: todo bien</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" data-i18n="m2btn">💬 Enviar por WhatsApp</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p2">
-      <div>
-        <h3 data-i18n="p3t">Organiza a tu compañía y tu equipo</h3>
-        <ul class="feat">
-          <li data-i18n="p3a">Múltiples compañías, cada una con sus edificios y datos separados</li>
-          <li data-i18n="p3b">Crea usuarios para tus trabajadores con contraseña temporal</li>
-          <li data-i18n="p3c">Activa o suspende compañías desde el panel de administrador</li>
-          <li data-i18n="p3d">Panel web para que la oficina revise hallazgos y reportes</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>👥 <span data-i18n="m3t">Equipo</span></b></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span>Juan P. — <span data-i18n="m3a">activo</span></span></div>
-          <div class="chk"><span class="dot ok">✓</span><span>María G. — <span data-i18n="m3a2">activa</span></span></div>
-          <div class="chk"><span class="dot pend">·</span><span>Carlos R. — <span data-i18n="m3b">pendiente</span></span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--green)" data-i18n="m3btn">＋ Crear trabajador</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p3">
-      <div>
-        <h3 data-i18n="p4t">Revisa tu historial mes a mes</h3>
-        <ul class="feat">
-          <li data-i18n="p4a">Calendario con todas tus inspecciones por mes y año</li>
-          <li data-i18n="p4b">Compara fotos del mes anterior contra el actual</li>
-          <li data-i18n="p4c">Abre cualquier inspección pasada en segundos</li>
-          <li data-i18n="p4d">Tus datos guardados en la nube, siempre disponibles</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📅 <span data-i18n="m4t">2026</span></b></div>
-        <div class="scr-bd" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Jul</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Ago</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Sep</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;background:var(--navy);color:#fff"><b>Oct</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;opacity:.4"><b>Nov</b><span>–</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;opacity:.4"><b>Dic</b><span>–</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--navy)" data-i18n="m4btn">Abrir inspección de octubre</div></div>
-      </div></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="sec" id="precios">
-  <div class="wrap">
-    <h2 data-i18n="prT">Precios simples, sin sorpresas</h2>
-    <p class="lede" data-i18n="prS">Elige el plan según tus edificios. Cambia o cancela cuando quieras.</p>
-    <div class="plans">
-      <div class="plan">
-        <h3>Core</h3>
-        <div class="price">$29<small data-i18n="perMo">/mes</small></div>
-        <p class="desc" data-i18n="coreD">Para empezar con un edificio.</p>
-        <ul>
-          <li data-i18n="core1">1 edificio</li>
-          <li data-i18n="core2">Walkthroughs ilimitados</li>
-          <li data-i18n="core3">Checklist por áreas + fotos</li>
-          <li data-i18n="core4">Reporte por WhatsApp</li>
-        </ul>
-        <a class="btn btn-green wa-plan" data-plan="Core ($29/mes)" href="#" data-i18n="planCta">Empezar</a>
-      </div>
-      <div class="plan pop">
-        <span class="pop-tag" data-i18n="popTag">★ MÁS POPULAR</span>
-        <h3>Connect</h3>
-        <div class="price">$99<small data-i18n="perMo2">/mes</small></div>
-        <p class="desc" data-i18n="connD">Para administradores con varios edificios.</p>
-        <ul>
-          <li data-i18n="conn1">5 edificios</li>
-          <li data-i18n="conn2">Todo lo de Core</li>
-          <li data-i18n="conn3">Equipo con usuarios y contraseñas</li>
-          <li data-i18n="conn4">Panel web para la oficina</li>
-          <li data-i18n="conn5">Calendario de inspecciones</li>
-        </ul>
-        <a class="btn btn-green wa-plan" data-plan="Connect ($99/mes)" href="#" data-i18n="planCta2">Empezar</a>
-      </div>
-      <div class="plan">
-        <h3>Grow</h3>
-        <div class="price">$199<small data-i18n="perMo3">/mes</small></div>
-        <p class="desc" data-i18n="growD">Para compañías en crecimiento.</p>
-        <ul>
-          <li data-i18n="grow1">Edificios ilimitados</li>
-          <li data-i18n="grow2">Todo lo de Connect</li>
-          <li data-i18n="grow3">Equipo ilimitado</li>
-          <li data-i18n="grow4">Soporte prioritario</li>
-        </ul>
-        <a class="btn btn-green wa-plan" data-plan="Grow ($199/mes)" href="#" data-i18n="planCta3">Empezar</a>
-      </div>
-    </div>
-    <p class="fine" data-i18n="prFine">Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp</p>
-
-    <div class="mtg" id="mtgpro">
-      <div>
-        <span class="tag">MTG PRO</span>
-        <h2 data-i18n="mtgT">¿Tienes una compañía de handyman?</h2>
-        <p data-i18n="mtgS">MTG Pro es nuestra app hermana para compañías de mantenimiento y reparaciones.</p>
-        <ul>
-          <li data-i18n="mtg1">Cotizaciones profesionales</li>
-          <li data-i18n="mtg2">Facturas (invoices)</li>
-          <li data-i18n="mtg3">Calendario de trabajos</li>
-          <li data-i18n="mtg4">Equipo con roles</li>
-          <li data-i18n="mtg5">Directorio de clientes</li>
-          <li data-i18n="mtg6">Reportes con fotos y GPS</li>
-        </ul>
-        <div class="price">$249<small data-i18n="perMo4">/mes</small></div>
-        <br><br>
-        <a class="btn btn-wa wa-plan" data-plan="MTG Pro ($249/mes)" href="#" data-i18n="mtgCta">💬 Pedir MTG Pro</a>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd" style="background:linear-gradient(135deg,#7A2E00,#FF6B00)"><b>🔧 <span>MTG Pro</span></b><br><small data-i18n="mtgPhS">Trabajos de hoy</small></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="mtgPh1">Reparación drywall — Cotizado</span></div>
-          <div class="chk"><span class="dot pend">·</span><span data-i18n="mtgPh2">Pintura apto 4B — Agendado</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="mtgPh3">Plomería — Facturado</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:#FF6B00" data-i18n="mtgPhBtn">＋ Nuevo trabajo</div></div>
-      </div></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="sec" id="faq" style="background:var(--bg)">
-  <div class="wrap">
-    <h2 data-i18n="faqT">Preguntas frecuentes</h2>
-    <div class="faq">
-      <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Escríbenos por WhatsApp, te registramos y activamos tu cuenta. En minutos estás haciendo tu primer recorrido.</div></details>
-      <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No. Todo se coordina por WhatsApp, sin formularios complicados.</div></details>
-      <details><summary data-i18n="fq3">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa3">La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.</div></details>
-      <details><summary data-i18n="fq4">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa4">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
-      <details><summary data-i18n="fq5">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa5">Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.</div></details>
-    </div>
-  </div>
-</section>
-
 <div class="wrap">
-  <div class="cta-final">
-    <h2 data-i18n="ctaT">Empieza tu primer recorrido hoy</h2>
-    <p data-i18n="ctaS">Escríbenos y te activamos en minutos.</p>
-    <a class="btn btn-wa" id="waCta" href="#" style="font-size:18px;padding:16px 40px" data-i18n="ctaB">💬 Hablar por WhatsApp</a>
+  <!-- LOGIN -->
+  <div id="login">
+    <div class="card">
+      <h3>Entrar</h3>
+      <p class="muted">Usa el correo y contraseña que te asignaron.</p>
+      <input type="email" id="email" placeholder="Correo" autocomplete="username">
+      <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+      <button class="btn" id="btnLogin">Entrar</button>
+      <div class="err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" hidden>
+    <div id="viewBuildings"></div>
+    <div id="viewMonths" hidden></div>
+    <div id="viewDetail" hidden></div>
   </div>
 </div>
 
-<footer>
-  <div class="wrap">
-    <div class="fcols">
-      <div>
-        <a class="logo" href="#" style="margin-bottom:14px"><span class="lg">🏢</span>WalkCheck</a>
-        <p style="font-size:14.5px;max-width:280px" data-i18n="ftD">Recorridos profesionales de propiedades, hechos en Miami.</p>
-      </div>
-      <div>
-        <h4 data-i18n="ftP">Producto</h4>
-        <a href="#pilares">WalkCheck</a>
-        <a href="#mtgpro">MTG Pro</a>
-        <a href="#precios" data-i18n="ftPr">Precios</a>
-      </div>
-      <div>
-        <h4 data-i18n="ftC">Contacto</h4>
-        <a id="waFooter" href="#">WhatsApp</a>
-      </div>
-      <div>
-        <h4 data-i18n="ftL">Legal</h4>
-        <a href="#" data-i18n="ftT">Términos</a>
-        <a href="#" data-i18n="ftPv">Privacidad</a>
-      </div>
-    </div>
-    <div class="fbot">
-      <span>© 2026 WalkCheck</span>
-      <span data-i18n="ftM">Hecho en Miami 🌴</span>
-    </div>
-  </div>
-</footer>
-
-<a class="wa-float" id="waFloat" href="#" aria-label="WhatsApp">💬</a>
-
 <script>
-var WA_NUMBER = "13055824136";
-function waLink(msg){ return "https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(msg); }
-var lang = "es";
-var STR = {
-  es: {
-    hero:"Hola, quiero información de WalkCheck.",
-    ventas:"Hola, quiero hablar con ventas de WalkCheck.",
-    plan:function(p){ return "Hola, me interesa el plan "+p+" de WalkCheck. ¿Cómo empezamos?"; }
-  },
-  en: {
-    hero:"Hi, I'd like info about WalkCheck.",
-    ventas:"Hi, I'd like to talk to WalkCheck sales.",
-    plan:function(p){ return "Hi, I'm interested in the "+p+" WalkCheck plan. How do we start?"; }
-  }
+// ============ CONFIGURACIÓN: pega aquí tu firebaseConfig ============
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
 };
-var I18N = {
-es:{
-navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navCta:"Hablar con Ventas",
-heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
-heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
-heroCta1:"💬 Agenda una demo",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · Te activamos por WhatsApp",
-t1:"Checklists por área",t2:"Fotos con ubicación",t3:"Reporte por WhatsApp",
-phT:"Recorrido · Octubre",phS:"8000 Harding Ave · Piso 3",
-ph1:"Pasillos — Sin objetos",ph2:"Estacionamientos — Con objetos",ph3:"Lobby — Todo en orden",ph4:"Cuarto de basura — Pendiente",ph5:"Piscina — Todo en orden",
-phBtn:"📲 Enviar reporte por WhatsApp",
-pilT:"Todo lo que necesitas, en 4 pilares",pilS:"Del recorrido al reporte final, WalkCheck cubre el proceso completo.",
-tab1:"📋 Documenta",tab2:"📲 Reporta",tab3:"👥 Organiza",tab4:"📅 Revisa",
-p1t:"Documenta cada recorrido como un profesional",
-p1a:"Checklist por áreas: pasillos, lobby, estacionamientos, piscina y más",
-p1b:"Hasta 6 fotos por hallazgo, con ubicación y piso exactos",
-p1c:"Botón de emergencia que avisa por WhatsApp al instante",
-p1d:"Funciona en Android y panel web para la oficina",
-m1t:"Checklist · Estacionamientos",m1a:"Objetos personales — Sin objetos",m1b:"Basura — Con objetos",m1c:"Iluminación — Todo bien",m1d:"Señalización — Todo bien",m1btn:"＋ Agregar hallazgo con foto",
-p2t:"Reportes listos para mandar por WhatsApp",
-p2a:"Un toque genera el reporte del mes, agrupado por piso",
-p2b:"Formato profesional con negritas, listo para el cliente",
-p2c:"Corrector automático de errores de escritura",
-p2d:"Las fotos quedan guardadas en la app y el panel",
-m2t:"Reporte · Octubre 2026",m2a:"Fecha: 16 Oct 2026",m2b:"Estacionamientos: todo en buen orden",m2c:"Lobby: todo bien",m2btn:"💬 Enviar por WhatsApp",
-p3t:"Organiza a tu compañía y tu equipo",
-p3a:"Múltiples compañías, cada una con sus edificios y datos separados",
-p3b:"Crea usuarios para tus trabajadores con contraseña temporal",
-p3c:"Activa o suspende compañías desde el panel de administrador",
-p3d:"Panel web para que la oficina revise hallazgos y reportes",
-m3t:"Equipo",m3a:"activo",m3a2:"activa",m3b:"pendiente",m3btn:"＋ Crear trabajador",
-p4t:"Revisa tu historial mes a mes",
-p4a:"Calendario con todas tus inspecciones por mes y año",
-p4b:"Compara fotos del mes anterior contra el actual",
-p4c:"Abre cualquier inspección pasada en segundos",
-p4d:"Tus datos guardados en la nube, siempre disponibles",
-m4t:"2026",m4btn:"Abrir inspección de octubre",
-prT:"Precios simples, sin sorpresas",prS:"Elige el plan según tus edificios. Cambia o cancela cuando quieras.",
-perMo:"/mes",perMo2:"/mes",perMo3:"/mes",perMo4:"/mes",
-popTag:"★ MÁS POPULAR",
-coreD:"Para empezar con un edificio.",core1:"1 edificio",core2:"Walkthroughs ilimitados",core3:"Checklist por áreas + fotos",core4:"Reporte por WhatsApp",
-connD:"Para administradores con varios edificios.",conn1:"5 edificios",conn2:"Todo lo de Core",conn3:"Equipo con usuarios y contraseñas",conn4:"Panel web para la oficina",conn5:"Calendario de inspecciones",
-growD:"Para compañías en crecimiento.",grow1:"Edificios ilimitados",grow2:"Todo lo de Connect",grow3:"Equipo ilimitado",grow4:"Soporte prioritario",
-planCta:"Empezar",planCta2:"Empezar",planCta3:"Empezar",
-prFine:"Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp",
-mtgT:"¿Tienes una compañía de handyman?",mtgS:"MTG Pro es nuestra app hermana para compañías de mantenimiento y reparaciones.",
-mtg1:"Cotizaciones profesionales",mtg2:"Facturas (invoices)",mtg3:"Calendario de trabajos",mtg4:"Equipo con roles",mtg5:"Directorio de clientes",mtg6:"Reportes con fotos y GPS",
-mtgCta:"💬 Pedir MTG Pro",mtgPhS:"Trabajos de hoy",mtgPh1:"Reparación drywall — Cotizado",mtgPh2:"Pintura apto 4B — Agendado",mtgPh3:"Plomería — Facturado",mtgPhBtn:"＋ Nuevo trabajo",
-faqT:"Preguntas frecuentes",
-fq1:"¿Cómo empiezo?",fa1:"Escríbenos por WhatsApp, te registramos y activamos tu cuenta. En minutos estás haciendo tu primer recorrido.",
-fq2:"¿Necesito tarjeta de crédito?",fa2:"No. Todo se coordina por WhatsApp, sin formularios complicados.",
-fq3:"¿Funciona en iPhone?",fa3:"La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.",
-fq4:"¿Puedo cambiar de plan o cancelar?",fa4:"Sí, cuando quieras. Sin contratos ni penalidades.",
-fq5:"¿Mis datos están seguros?",fa5:"Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.",
-ctaT:"Empieza tu primer recorrido hoy",ctaS:"Escríbenos y te activamos en minutos.",ctaB:"💬 Hablar por WhatsApp",
-ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
-},
-en:{
-navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navCta:"Talk to Sales",
-heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
-heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",
-heroCta1:"💬 Book a demo",heroCta2:"See pricing",heroNote:"No credit card · We activate you via WhatsApp",
-t1:"Checklists by area",t2:"Photos with location",t3:"WhatsApp report",
-phT:"Walkthrough · October",phS:"8000 Harding Ave · Floor 3",
-ph1:"Hallways — No items",ph2:"Parking — With items",ph3:"Lobby — All good",ph4:"Trash room — Pending",ph5:"Pool — All good",
-phBtn:"📲 Send report via WhatsApp",
-pilT:"Everything you need, in 4 pillars",pilS:"From walkthrough to final report, WalkCheck covers the whole process.",
-tab1:"📋 Document",tab2:"📲 Report",tab3:"👥 Organize",tab4:"📅 Review",
-p1t:"Document every walkthrough like a pro",
-p1a:"Checklists by area: hallways, lobby, parking, pool and more",
-p1b:"Up to 6 photos per finding, with exact location and floor",
-p1c:"Emergency button that alerts via WhatsApp instantly",
-p1d:"Works on Android plus a web panel for the office",
-m1t:"Checklist · Parking",m1a:"Personal items — No items",m1b:"Trash — With items",m1c:"Lighting — All good",m1d:"Signage — All good",m1btn:"＋ Add finding with photo",
-p2t:"Reports ready to send via WhatsApp",
-p2a:"One tap generates the monthly report, grouped by floor",
-p2b:"Professional format with bold text, client-ready",
-p2c:"Automatic typo correction",
-p2d:"Photos stay saved in the app and the panel",
-m2t:"Report · October 2026",m2a:"Date: Oct 16, 2026",m2b:"Parking: all in good order",m2c:"Lobby: all good",m2btn:"💬 Send via WhatsApp",
-p3t:"Organize your company and team",
-p3a:"Multiple companies, each with separate buildings and data",
-p3b:"Create logins for your workers with temporary passwords",
-p3c:"Activate or suspend companies from the admin panel",
-p3d:"Web panel for the office to review findings and reports",
-m3t:"Team",m3a:"active",m3a2:"active",m3b:"pending",m3btn:"＋ Create worker",
-p4t:"Review your history month by month",
-p4a:"Calendar with all your inspections by month and year",
-p4b:"Compare last month's photos against the current one",
-p4c:"Open any past inspection in seconds",
-p4d:"Your data saved in the cloud, always available",
-m4t:"2026",m4btn:"Open October inspection",
-prT:"Simple pricing, no surprises",prS:"Choose the plan that fits your buildings. Change or cancel anytime.",
-perMo:"/mo",perMo2:"/mo",perMo3:"/mo",perMo4:"/mo",
-popTag:"★ MOST POPULAR",
-coreD:"To start with one building.",core1:"1 building",core2:"Unlimited walkthroughs",core3:"Checklists by area + photos",core4:"WhatsApp report",
-connD:"For managers with several buildings.",conn1:"5 buildings",conn2:"Everything in Core",conn3:"Team with logins & passwords",conn4:"Web panel for the office",conn5:"Inspection calendar",
-growD:"For growing companies.",grow1:"Unlimited buildings",grow2:"Everything in Connect",grow3:"Unlimited team",grow4:"Priority support",
-planCta:"Get started",planCta2:"Get started",planCta3:"Get started",
-prFine:"No contracts · No credit card to start · We activate you via WhatsApp",
-mtgT:"Run a handyman company?",mtgS:"MTG Pro is our sister app for maintenance and repair companies.",
-mtg1:"Professional quotes",mtg2:"Invoices",mtg3:"Job calendar",mtg4:"Team with roles",mtg5:"Client directory",mtg6:"Reports with photos & GPS",
-mtgCta:"💬 Get MTG Pro",mtgPhS:"Today's jobs",mtgPh1:"Drywall repair — Quoted",mtgPh2:"Painting apt 4B — Scheduled",mtgPh3:"Plumbing — Invoiced",mtgPhBtn:"＋ New job",
-faqT:"Frequently asked questions",
-fq1:"How do I start?",fa1:"Message us on WhatsApp, we register and activate your account. In minutes you're doing your first walkthrough.",
-fq2:"Do I need a credit card?",fa2:"No. Everything is handled via WhatsApp, no complicated forms.",
-fq3:"Does it work on iPhone?",fa3:"The app runs on Android and the web panel on any device. The iPhone version is in development.",
-fq4:"Can I change plans or cancel?",fa4:"Yes, anytime. No contracts or penalties.",
-fq5:"Is my data safe?",fa5:"Your buildings, photos and reports are stored in the cloud and only your company can see them.",
-ctaT:"Start your first walkthrough today",ctaS:"Message us and we activate you in minutes.",ctaB:"💬 Chat on WhatsApp",
-ftD:"Professional property walkthroughs, made in Miami.",ftP:"Product",ftPr:"Pricing",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
-}};
-function tab(n){
-  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('on', i===n); });
-  document.querySelectorAll('.pillar').forEach(function(p,i){ p.classList.toggle('on', i===n); });
+// ====================================================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const AREAS = [
+  {icon:'🚶', name:'Pasillos y escaleras', items:[
+    {t:'Objetos personales', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Basura u obstáculos en el paso', ok:'Sin basura', bad:'Con basura'},
+    {t:'Pisos', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Barandas', ok:'Firmes', bad:'Flojas'}]},
+  {icon:'🚪', name:'Entradas y lobby', items:[
+    {t:'Puertas', ok:'Cierran bien', bad:'No cierran'},
+    {t:'Cerraduras', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Cristales', ok:'Sin roturas', bad:'Rotos'},
+    {t:'Luces', ok:'Encendidas', bad:'Apagadas'},
+    {t:'Limpieza del área', ok:'Limpia', bad:'Sucia'}]},
+  {icon:'💡', name:'Luces', items:[
+    {t:'Pasillos', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Escaleras', ok:'Iluminadas', bad:'Sin luz'},
+    {t:'Entradas y lobby', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Estacionamiento', ok:'Iluminado', bad:'Sin luz'}]},
+  {icon:'🧱', name:'Paredes, techos y concreto', items:[
+    {t:'Grietas o desprendimientos', ok:'Sin grietas', bad:'Con grietas'},
+    {t:'Humedad o filtraciones', ok:'Sin humedad', bad:'Con humedad'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Varillas expuestas', ok:'Sin varillas', bad:'Con varillas'}]},
+  {icon:'🧯', name:'Equipos de seguridad', items:[
+    {t:'Extintores', ok:'Visibles y accesibles', bad:'Faltan o bloqueados'},
+    {t:'Gabinetes contra incendios', ok:'En orden', bad:'En desorden'},
+    {t:'Alarmas', ok:'Sin daño', bad:'Dañadas'},
+    {t:'Salidas de emergencia', ok:'Despejadas', bad:'Bloqueadas'}]},
+  {icon:'🅿️', name:'Estacionamientos', items:[
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones', ok:'Sin filtraciones', bad:'Con filtraciones'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Basura o condiciones', ok:'Limpio y seguro', bad:'Sucio o inseguro'}]},
+  {icon:'🗑️', name:'Cuartos de basura y servicio', items:[
+    {t:'Acumulación de basura', ok:'Sin acumulación', bad:'Acumulada'},
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones u olores', ok:'Sin filtraciones', bad:'Con filtraciones'}]},
+  {icon:'🏊', name:'Piscina, patios y áreas comunes', items:[
+    {t:'Limpieza general', ok:'Adecuada', bad:'Deficiente'},
+    {t:'Mantenimiento', ok:'Al día', bad:'Atrasado'},
+    {t:'Condiciones', ok:'Seguras', bad:'Inseguras'}]},
+];
+function itemLabel(i, j, st){
+  const it = AREAS[i].items[j];
+  return it.t + ': ' + (st===2 ? it.bad : it.ok);
 }
-function refreshWa(){
-  document.getElementById("waHero").href = waLink(STR[lang].hero);
-  document.getElementById("waFloat").href = waLink(STR[lang].hero);
-  document.getElementById("waFooter").href = waLink(STR[lang].hero);
-  document.getElementById("waHd").href = waLink(STR[lang].ventas);
-  document.getElementById("waCta").href = waLink(STR[lang].hero);
-  document.querySelectorAll(".wa-plan").forEach(function(a){
-    a.href = waLink(STR[lang].plan(a.getAttribute("data-plan")));
+function nombreMes(ym){ const p = ym.split('-'); return MESES[parseInt(p[1])-1] + ' ' + p[0]; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fl(f){ return f.floor ? 'Piso ' + esc(f.floor) + ' · ' : ''; }
+
+const $ = id => document.getElementById(id);
+function show(id){
+  ['viewBuildings','viewMonths','viewDetail'].forEach(v => $(v).hidden = (v !== id));
+}
+
+// ---------- Auth ----------
+$('btnLogin').onclick = async () => {
+  $('loginErr').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+  } catch(e){ $('loginErr').textContent = 'No se pudo entrar: ' + e.message; }
+};
+$('btnLogout').onclick = () => auth.signOut();
+auth.onAuthStateChanged(user => {
+  $('login').hidden = !!user;
+  $('app').hidden = !user;
+  $('btnLogout').hidden = !user;
+  if (user) loadBuildings();
+});
+
+// ---------- Edificios ----------
+let buildings = {};
+async function loadBuildings(){
+  show('viewBuildings');
+  const snap = await db.collection('buildings').get();
+  buildings = {};
+  let html = `<h2>Edificios</h2>
+  <div class="card">
+    <h3>＋ Nuevo edificio</h3>
+    <input type="text" id="nbName" placeholder="Nombre del edificio">
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="flex:1;"><label class="muted">Pisos</label><input type="number" id="nbFloors" value="1" min="1" max="100"></div>
+      <div style="flex:2;"><button class="btn" onclick="addBuilding()">Agregar</button></div>
+    </div>
+  </div>`;
+  if (snap.empty) html += '<div class="card"><p class="muted">Todavía no hay edificios sincronizados desde el teléfono.</p></div>';
+  snap.forEach(d => {
+    const b = d.data(); buildings[d.id] = b;
+    html += `<div class="card clickable" onclick="loadMonths('${d.id}')">
+      <h3>🏢 ${esc(b.name)}</h3><p class="muted">Ver recorridos →</p></div>`;
   });
+  $('viewBuildings').innerHTML = html;
 }
-function applyLang(){
-  var d = I18N[lang];
-  document.querySelectorAll("[data-i18n]").forEach(function(el){
-    var k = el.getAttribute("data-i18n");
-    if(d[k] !== undefined) el.innerHTML = d[k];
+
+// ---------- Meses ----------
+async function loadMonths(buildingId){
+  show('viewMonths');
+  $('viewMonths').innerHTML = '<p class="muted">Cargando…</p>';
+  const snap = await db.collection('walkthroughs')
+    .where('buildingId','==',buildingId).get();
+  const list = [];
+  snap.forEach(d => list.push({id:d.id, ...d.data()}));
+  list.sort((a,b) => b.yearMonth.localeCompare(a.yearMonth));
+  const b = buildings[buildingId] || {name:''};
+  let html = `<button class="back" onclick="loadBuildings()">← Edificios</button>
+    <h2>${esc(b.name)}</h2>`;
+  if (!list.length) html += '<div class="card"><p class="muted">Sin recorridos todavía.</p></div>';
+  list.forEach(w => {
+    const urg = (w.findings||[]).filter(f=>f.urgent).length;
+    html += `<div class="card clickable" onclick="loadDetail('${w.id}')">
+      <h3>📋 ${nombreMes(w.yearMonth)}</h3>
+      <p class="muted">${(w.findings||[]).length} hallazgo(s)</p>
+      ${urg?`<span class="badge b-urg">🚨 ${urg} urgente(s)</span>`:''}</div>`;
   });
-  document.documentElement.lang = lang;
-  document.querySelector(".lang-toggle").textContent = (lang==="es") ? "EN" : "ES";
-  refreshWa();
+  window._months = {}; list.forEach(w => window._months[w.id] = w);
+  $('viewMonths').innerHTML = html;
 }
-function toggleLang(){ lang = (lang==="es") ? "en" : "es"; applyLang(); }
-applyLang();
+
+// ---------- Agregar edificio desde el panel ----------
+async function addBuilding(){
+  const name = document.getElementById('nbName').value.trim();
+  const floors = Math.min(100, Math.max(1, parseInt(document.getElementById('nbFloors').value) || 1));
+  if (!name){ alert('Escribe el nombre del edificio'); return; }
+  const ref = db.collection('buildings').doc();
+  await ref.set({id: ref.id, name: name, floors: floors});
+  loadBuildings();
+}
+
+// ---------- Detalle ----------
+function areaStatus(w, i, floor){
+  const findings = (w.findings||[]).filter(f => f.areaIndex===i && (floor ? f.floor===floor : true));
+  if (findings.length) return {t: findings.length + ' hallazgo(s)', c:'b-warn'};
+  let ok = 0, bad = 0;
+  for (let j=0;j<AREAS[i].items.length;j++){
+    // Clave nueva por piso ('PB-0-0'), con fallback a clave vieja ('0-0').
+    // 1 = bien ✓, 2 = mal ✗.
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===1) ok++;
+    if (s===2) bad++;
+  }
+  if (bad>0) return {t: bad + ' punto(s) mal', c:'b-urg'};
+  if (ok === AREAS[i].items.length) return {t:'Sin problemas', c:'b-ok'};
+  return {t:'Pendiente', c:''};
+}
+
+function badItems(w, i, floor){
+  const out = [];
+  for (let j=0;j<AREAS[i].items.length;j++){
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===2) {
+      const note = (w.itemNotes && (w.itemNotes[floor+'-'+i+'-'+j] || w.itemNotes[i+'-'+j])) || '';
+      out.push({label: itemLabel(i, j, 2), note: note});
+    }
+  }
+  return out;
+}
+
+function findingCard(f){
+  const area = AREAS[f.areaIndex] ? AREAS[f.areaIndex].icon+' '+AREAS[f.areaIndex].name : '';
+  // Fotos: modelo nuevo (photos[]/photoUrls[], hasta 6) con fallback al viejo.
+  // Solo URLs http sirven en web; las rutas locales del teléfono no cargan.
+  let urls = [];
+  if (f.photoUrls && f.photoUrls.length) {
+    urls = f.photoUrls.filter(u => u && String(u).startsWith('http'));
+  }
+  if (!urls.length && f.photos && f.photos.length) {
+    urls = f.photos.filter(p => p && String(p).startsWith('http'));
+  }
+  if (!urls.length) {
+    const g = f.photoGeneralUrl || ((f.photoGeneral||'').startsWith('http') ? f.photoGeneral : null);
+    const c = f.photoCloseupUrl || ((f.photoCloseup||'').startsWith('http') ? f.photoCloseup : null);
+    if (g) urls.push(g);
+    if (c) urls.push(c);
+  }
+  let ph = '';
+  if (urls.length){
+    ph = '<div class="photos">';
+    urls.forEach((u, idx) => {
+      ph += `<div><a href="${u}" target="_blank"><img src="${u}" loading="lazy"></a><div class="cap">Foto ${idx+1}</div></div>`;
+    });
+    ph += '</div>';
+  }
+  return `<div class="card finding ${f.urgent?'urgent':''}">
+    ${f.urgent?'<span class="badge b-urg">🚨 URGENTE</span> ':''}
+    <h3>${fl(f)}${esc(f.location || f.itemLabel || '')}</h3>
+    <p class="muted">${esc(area)}${f.itemLabel && f.location ? ' · '+esc(f.itemLabel):''}</p>
+    <p>${esc(f.description)}</p>${ph}</div>`;
+}
+
+function buildReport(w, bname, floors){
+  let t = `REPORTE WALKTHROUGH — ${bname}\nMes: ${nombreMes(w.yearMonth)}\n\n`;
+  // No listar hallazgos vacíos (sin descripción, ubicación ni fotos).
+  const isEmptyF = f => !(f.description||'').trim() && !(f.location||'').trim() &&
+    !((f.photoUrls||[]).length || (f.photos||[]).filter(p=>String(p).startsWith('http')).length || f.photoGeneralUrl || f.photoCloseupUrl);
+  const urg = (w.findings||[]).filter(f=>f.urgent && !isEmptyF(f));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && !isEmptyF(f));
+  const floorOrder = ['PB'];
+  for (let i=1;i<=(floors||1);i++) floorOrder.push(String(i));
+  const fh = fl2 => fl2==='PB' ? 'PLANTA BAJA' : 'PISO '+fl2;
+  if (urg.length){
+    t += `🚨 HALLAZGOS URGENTES (${urg.length}):\n`;
+    urg.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location}: ${f.description}\n`);
+    t += '\n';
+  }
+  floorOrder.forEach(fl2 => {
+    const ff = rest.filter(f => f.floor===fl2);
+    if (!ff.length) return;
+    t += `📋 ${fh(fl2)} (${ff.length}):\n`;
+    ff.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
+    t += '\n';
+  });
+  const noFloor = rest.filter(f => !f.floor);
+  if (noFloor.length){
+    t += `📋 SIN PISO ASIGNADO (${noFloor.length}):\n`;
+    noFloor.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
+    t += '\n';
+  }
+  const okAreas = [];
+  floorOrder.forEach(fl2 => {
+    AREAS.forEach((a,i) => { if (areaStatus(w,i,fl2).c==='b-ok') okAreas.push(`${fh(fl2)} · ${a.icon} ${a.name}`); });
+  });
+  // Puntos marcados como mal (✗) por piso.
+  floorOrder.forEach(fl2 => {
+    const bad = [];
+    AREAS.forEach((a,i) => {
+      badItems(w,i,fl2).forEach(b => bad.push(`• [${a.name}] ${b.label}${b.note ? ' — ' + b.note : ''}`));
+    });
+    if (!bad.length) return;
+    t += `⚠️ ${fh(fl2)} — PUNTOS MAL (${bad.length}):\n`;
+    bad.forEach(x => t += x + '\n');
+    t += '\n';
+  });
+  t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}):\n`;
+  okAreas.forEach(a => t += `• ${a}\n`);
+  return t;
+}
+
+let _selFloor = null;
+
+async function loadDetail(wid, floor){
+  show('viewDetail');
+  const w = window._months[wid];
+  const bld = Object.values(buildings).find(b=>b.id===w.buildingId) || {};
+  const bname = bld.name || '';
+  const nFloors = bld.floors || 1;
+  if (floor !== undefined) _selFloor = floor;
+  if (!_selFloor) _selFloor = 'PB';
+  const fl2 = _selFloor;
+  const fh = f => f==='PB' ? 'Planta baja' : 'Piso '+f;
+
+  let html = `<button class="back" onclick="show('viewMonths')">← Recorridos</button>
+    <h2>${esc(bname)} · ${nombreMes(w.yearMonth)}</h2>
+    <div class="card"><h3>🏢 ${fh(fl2)}</h3><div style="display:flex;gap:8px;flex-wrap:wrap;">`;
+  const floors = ['PB'];
+  for (let i=1;i<=nFloors;i++) floors.push(String(i));
+  floors.forEach(f => {
+    html += `<button class="btn" style="width:auto;padding:8px 16px;${f===fl2?'':'background:#90a4ae;'}" onclick="loadDetail('${wid}','${f}')">${f==='PB'?'PB':'P'+f}</button>`;
+  });
+  html += `</div></div>`;
+
+  const urg = (w.findings||[]).filter(f=>f.urgent && (!f.floor || f.floor===fl2));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && f.floor===fl2);
+  if (urg.length){ html += '<h3>🚨 Urgentes</h3>'; urg.forEach(f => html += findingCard(f)); }
+  if (rest.length){ html += `<h3>📋 Hallazgos · ${fh(fl2)}</h3>`; rest.forEach(f => html += findingCard(f)); }
+  if (!urg.length && !rest.length) html += `<div class="card"><p class="muted">Sin hallazgos en ${fh(fl2)} este mes.</p></div>`;
+
+  const badHtml = [];
+  AREAS.forEach((a,i) => {
+    badItems(w,i,fl2).forEach(b => badHtml.push(`<div class="card finding"><h3>✗ ${esc(a.icon)} ${esc(a.name)}</h3><p><b>${esc(b.label)}</b>${b.note ? `<br>📝 ${esc(b.note)}` : ''}</p></div>`));
+  });
+  if (badHtml.length) html += `<h3>⚠️ Puntos marcados como mal</h3>` + badHtml.join('');
+
+  html += '<h3>Estado por área</h3><div class="grid2">';
+  AREAS.forEach((a,i) => {
+    const s = areaStatus(w,i,fl2);
+    html += `<div class="card"><h3>${a.icon} ${a.name}</h3><span class="badge ${s.c}">${s.t}</span></div>`;
+  });
+  html += '</div>';
+
+  const rep = buildReport(w, bname, nFloors);
+  html += `<h3>Reporte del mes</h3><div class="card">
+    <pre class="report" id="repText">${esc(rep)}</pre>
+    <button class="btn green" onclick="navigator.clipboard.writeText(document.getElementById('repText').innerText);this.textContent='¡Copiado!';">📋 Copiar reporte</button>
+  </div>`;
+  $('viewDetail').innerHTML = html;
+}
 </script>
 </body>
 </html>
